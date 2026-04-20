@@ -1,46 +1,604 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>You Didn't Say the Magic Word</title>
-    <style>
-        body {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            margin: 0;
-            font-family: Arial, sans-serif;
-            text-align: center;
-            background: url('jurassic_park_background.jpg') no-repeat center center fixed;
-            background-size: cover;
-            color: white;
-        }
-        img {
-            max-width: 100%;
-            height: auto;
-        }
-        p {
-            font-size: 24px;
-            font-weight: bold;
-            background-color: rgba(0, 0, 0, 0.5);
-            padding: 10px;
-            border-radius: 5px;
-        }
-    </style>
-    <script>
-        function redirect() {
-            setTimeout(function() {
-                window.location.href = 'https://www.youtube.com/watch?v=dQw4w9WgXcQ';
-            }, 3000);
-        }
-    </script>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Magic Word // INGEN Terminal</title>
+  <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Orbitron:wght@400;700;900&display=swap" rel="stylesheet"/>
+  <style>
+    :root {
+      --green: #00ff41;
+      --dim-green: #00b32c;
+      --amber: #ffb000;
+      --red: #ff2d2d;
+      --blue: #00cfff;
+      --bg: #030a04;
+      --panel: rgba(0, 255, 65, 0.04);
+      --border: rgba(0, 255, 65, 0.2);
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    html, body {
+      width: 100%; height: 100%;
+      background: var(--bg);
+      color: var(--green);
+      font-family: 'Share Tech Mono', monospace;
+      overflow: hidden;
+    }
+
+    /* CRT scanlines */
+    body::before {
+      content: '';
+      position: fixed; inset: 0;
+      background: repeating-linear-gradient(
+        0deg,
+        transparent,
+        transparent 2px,
+        rgba(0,0,0,0.12) 2px,
+        rgba(0,0,0,0.12) 4px
+      );
+      pointer-events: none;
+      z-index: 200;
+    }
+
+    /* CRT vignette */
+    body::after {
+      content: '';
+      position: fixed; inset: 0;
+      background: radial-gradient(ellipse at center, transparent 55%, rgba(0,0,0,0.85) 100%);
+      pointer-events: none;
+      z-index: 199;
+    }
+
+    .container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      padding: 2rem;
+      position: relative;
+    }
+
+    .header {
+      font-family: 'Orbitron', monospace;
+      font-size: clamp(1rem, 3vw, 1.5rem);
+      font-weight: 700;
+      color: var(--amber);
+      text-shadow: 0 0 15px rgba(255,176,0,0.7);
+      letter-spacing: 0.2em;
+      text-align: center;
+      margin-bottom: 0.4rem;
+    }
+
+    .sub-header {
+      font-size: 0.72rem;
+      color: var(--dim-green);
+      letter-spacing: 0.3em;
+      text-transform: uppercase;
+      margin-bottom: 2.5rem;
+      text-align: center;
+    }
+
+    .terminal {
+      width: min(580px, 95vw);
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      overflow: hidden;
+      box-shadow: 0 0 40px rgba(0,255,65,0.07), inset 0 0 40px rgba(0,255,65,0.02);
+    }
+
+    .terminal-bar {
+      background: rgba(0,255,65,0.08);
+      border-bottom: 1px solid var(--border);
+      padding: 0.5rem 1rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.65rem;
+      color: var(--dim-green);
+      letter-spacing: 0.1em;
+    }
+
+    .terminal-dots span {
+      display: inline-block;
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      margin-right: 4px;
+    }
+    .terminal-dots span:nth-child(1) { background: #ff5f57; }
+    .terminal-dots span:nth-child(2) { background: #febc2e; }
+    .terminal-dots span:nth-child(3) { background: #28c840; }
+
+    .output-area {
+      padding: 1.5rem;
+      min-height: 180px;
+      font-size: 0.8rem;
+      line-height: 1.9;
+    }
+
+    .out-line {
+      opacity: 0;
+      animation: line-in 0.3s forwards;
+      display: flex;
+      gap: 0.5rem;
+    }
+
+    @keyframes line-in {
+      from { opacity: 0; transform: translateX(-4px); }
+      to { opacity: 1; transform: translateX(0); }
+    }
+
+    .out-line .tag { color: var(--amber); min-width: 55px; }
+    .out-line .ok { color: var(--green); }
+    .out-line .err { color: var(--red); }
+    .out-line .info { color: var(--blue); }
+
+    .input-area {
+      border-top: 1px solid var(--border);
+      padding: 1rem 1.5rem;
+      display: flex;
+      align-items: center;
+      gap: 0.8rem;
+    }
+
+    .prompt-symbol {
+      color: var(--green);
+      font-size: 0.9rem;
+      flex-shrink: 0;
+    }
+
+    #magic-input {
+      flex: 1;
+      background: transparent;
+      border: none;
+      outline: none;
+      color: var(--green);
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 0.9rem;
+      caret-color: var(--green);
+      text-shadow: 0 0 8px rgba(0,255,65,0.5);
+    }
+
+    #magic-input::placeholder {
+      color: rgba(0,255,65,0.25);
+    }
+
+    .submit-btn {
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--green);
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 0.75rem;
+      padding: 0.4rem 0.8rem;
+      cursor: pointer;
+      letter-spacing: 0.1em;
+      transition: all 0.2s;
+    }
+
+    .submit-btn:hover {
+      background: rgba(0,255,65,0.1);
+      border-color: var(--green);
+      box-shadow: 0 0 10px rgba(0,255,65,0.3);
+    }
+
+    /* Nedry popup */
+    #nedry-popup {
+      display: none;
+      position: fixed;
+      inset: 0;
+      z-index: 300;
+      align-items: center;
+      justify-content: center;
+      background: rgba(0,0,0,0.88);
+      animation: fade-in 0.2s;
+    }
+
+    #nedry-popup.show {
+      display: flex;
+    }
+
+    @keyframes fade-in {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+
+    .nedry-box {
+      text-align: center;
+      animation: pop-in 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+
+    @keyframes pop-in {
+      from { transform: scale(0.5) rotate(-5deg); opacity: 0; }
+      to { transform: scale(1) rotate(0); opacity: 1; }
+    }
+
+    .nedry-img {
+      width: min(280px, 75vw);
+      border: 3px solid var(--amber);
+      border-radius: 4px;
+      display: block;
+      margin: 0 auto;
+      box-shadow: 0 0 40px rgba(255,176,0,0.5);
+      image-rendering: auto;
+    }
+
+    .nedry-text {
+      font-family: 'Orbitron', monospace;
+      font-size: clamp(1rem, 4vw, 1.8rem);
+      font-weight: 900;
+      color: var(--amber);
+      text-shadow: 0 0 20px rgba(255,176,0,0.9);
+      margin-top: 1.5rem;
+      letter-spacing: 0.1em;
+      animation: shake 0.5s 0.3s ease-in-out;
+    }
+
+    @keyframes shake {
+      0%, 100% { transform: translateX(0); }
+      20% { transform: translateX(-8px) rotate(-2deg); }
+      40% { transform: translateX(8px) rotate(2deg); }
+      60% { transform: translateX(-6px); }
+      80% { transform: translateX(6px); }
+    }
+
+    .nedry-sub {
+      font-size: 0.8rem;
+      color: var(--dim-green);
+      margin-top: 0.6rem;
+      letter-spacing: 0.15em;
+    }
+
+    .nedry-dismiss {
+      margin-top: 1.5rem;
+      background: transparent;
+      border: 1px solid var(--amber);
+      color: var(--amber);
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 0.8rem;
+      padding: 0.5rem 1.2rem;
+      cursor: pointer;
+      letter-spacing: 0.1em;
+      transition: all 0.2s;
+    }
+
+    .nedry-dismiss:hover {
+      background: rgba(255,176,0,0.15);
+    }
+
+    /* Success screen */
+    #success-screen {
+      display: none;
+      position: fixed;
+      inset: 0;
+      z-index: 300;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+      background: var(--bg);
+      animation: fade-in 0.3s;
+    }
+
+    #success-screen.show {
+      display: flex;
+    }
+
+    .success-text {
+      font-family: 'Orbitron', monospace;
+      font-size: clamp(1.2rem, 5vw, 2.5rem);
+      font-weight: 900;
+      color: var(--green);
+      text-shadow: 0 0 30px rgba(0,255,65,1), 0 0 60px rgba(0,255,65,0.5);
+      text-align: center;
+      animation: glow-pulse 0.8s ease-in-out infinite alternate;
+    }
+
+    @keyframes glow-pulse {
+      from { text-shadow: 0 0 20px rgba(0,255,65,0.8), 0 0 40px rgba(0,255,65,0.3); }
+      to { text-shadow: 0 0 40px rgba(0,255,65,1), 0 0 80px rgba(0,255,65,0.7), 0 0 120px rgba(0,255,65,0.3); }
+    }
+
+    .loading-bar-wrap {
+      margin-top: 2rem;
+      width: min(400px, 80vw);
+      height: 6px;
+      background: rgba(0,255,65,0.1);
+      border: 1px solid var(--border);
+      border-radius: 2px;
+      overflow: hidden;
+    }
+
+    .loading-bar {
+      height: 100%;
+      background: linear-gradient(90deg, var(--green), var(--dim-green));
+      width: 0%;
+      animation: load-up 2.5s 0.5s ease-in forwards;
+      box-shadow: 0 0 10px var(--green);
+    }
+
+    @keyframes load-up {
+      0% { width: 0%; }
+      30% { width: 35%; }
+      60% { width: 60%; }
+      80% { width: 80%; }
+      95% { width: 95%; }
+      100% { width: 100%; }
+    }
+
+    .loading-label {
+      font-size: 0.72rem;
+      color: var(--dim-green);
+      margin-top: 0.6rem;
+      letter-spacing: 0.15em;
+      text-align: center;
+    }
+
+    #load-status {
+      color: var(--green);
+    }
+
+    /* Attempt counter */
+    .attempt-tracker {
+      margin-top: 1.5rem;
+      font-size: 0.7rem;
+      color: rgba(0,255,65,0.35);
+      letter-spacing: 0.1em;
+      text-align: center;
+    }
+
+    .blink { animation: blink 1.2s step-end infinite; }
+    @keyframes blink { 50% { opacity: 0; } }
+
+    .corner-deco {
+      position: fixed;
+      width: 50px; height: 50px;
+      opacity: 0.12;
+    }
+    .corner-deco.tl { top: 16px; left: 16px; border-top: 2px solid var(--green); border-left: 2px solid var(--green); }
+    .corner-deco.tr { top: 16px; right: 16px; border-top: 2px solid var(--green); border-right: 2px solid var(--green); }
+    .corner-deco.bl { bottom: 30px; left: 16px; border-bottom: 2px solid var(--green); border-left: 2px solid var(--green); }
+    .corner-deco.br { bottom: 30px; right: 16px; border-bottom: 2px solid var(--green); border-right: 2px solid var(--green); }
+
+    .status-bar {
+      position: fixed;
+      bottom: 0; left: 0; right: 0;
+      height: 26px;
+      background: rgba(0,255,65,0.06);
+      border-top: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      padding: 0 1.5rem;
+      font-size: 0.62rem;
+      color: var(--dim-green);
+      justify-content: space-between;
+      z-index: 50;
+    }
+
+    .status-dot {
+      display: inline-block;
+      width: 5px; height: 5px;
+      background: var(--green);
+      border-radius: 50%;
+      margin-right: 5px;
+      animation: pulse 2s ease-in-out infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { box-shadow: 0 0 3px var(--green); }
+      50% { box-shadow: 0 0 8px var(--green); opacity: 0.7; }
+    }
+
+    /* Glitch effect on wrong answer */
+    .glitch {
+      animation: glitch 0.4s;
+    }
+
+    @keyframes glitch {
+      0% { transform: translate(0); filter: none; }
+      20% { transform: translate(-3px, 2px); filter: hue-rotate(90deg); }
+      40% { transform: translate(3px, -2px); filter: brightness(2); }
+      60% { transform: translate(-2px, 1px); filter: hue-rotate(-90deg); }
+      80% { transform: translate(2px, -1px); filter: none; }
+      100% { transform: translate(0); filter: none; }
+    }
+  </style>
 </head>
-<body onload="redirect()">
-    <div>
-        <img src="dennis_nedry.jpg" alt="Dennis Nedry">
-        <p>You didn't say the magic word</p>
+<body>
+
+<div class="corner-deco tl"></div>
+<div class="corner-deco tr"></div>
+<div class="corner-deco bl"></div>
+<div class="corner-deco br"></div>
+
+<div class="container">
+  <div class="header">INGEN CORP // AUTH NODE</div>
+  <div class="sub-header">Restricted Access &nbsp;·&nbsp; Identity Verification Required</div>
+
+  <div class="terminal" id="terminal">
+    <div class="terminal-bar">
+      <div class="terminal-dots">
+        <span></span><span></span><span></span>
+      </div>
+      <span>INGEN_TERM — auth@siteB.local — 80×24</span>
+      <span id="clock2">--:--:--</span>
     </div>
+    <div class="output-area" id="output">
+      <div class="out-line" style="animation-delay:0.2s">
+        <span class="tag">[AUTH]</span>
+        <span>Terminal session started. Welcome.</span>
+      </div>
+      <div class="out-line" style="animation-delay:0.8s">
+        <span class="tag">[AUTH]</span>
+        <span>User identity: <span class="err">UNKNOWN</span></span>
+      </div>
+      <div class="out-line" style="animation-delay:1.4s">
+        <span class="tag">[AUTH]</span>
+        <span>To gain access, enter the <span class="info">magic word</span>.</span>
+      </div>
+      <div class="out-line" style="animation-delay:2s">
+        <span class="tag">[SYS]</span>
+        <span class="ok">Ready. <span class="blink">_</span></span>
+      </div>
+    </div>
+    <div class="input-area">
+      <span class="prompt-symbol">root@ingen:~$</span>
+      <input
+        type="text"
+        id="magic-input"
+        placeholder="enter the magic word..."
+        autocomplete="off"
+        spellcheck="false"
+        autofocus
+      />
+      <button class="submit-btn" onclick="submitWord()">[ ENTER ]</button>
+    </div>
+  </div>
+
+  <div class="attempt-tracker" id="attempts"></div>
+</div>
+
+<!-- Nedry Popup -->
+<div id="nedry-popup">
+  <div class="nedry-box">
+    <img
+      src="dennis_nedry.jpg"
+      alt="Dennis Nedry"
+      class="nedry-img"
+      onerror="this.style.display='none'; document.getElementById('fallback-nedry').style.display='block';"
+    />
+    <div id="fallback-nedry" style="display:none; font-size:5rem; margin-bottom:1rem;">🦕</div>
+    <div class="nedry-text" id="nedry-msg">AH AH AH...</div>
+    <div class="nedry-sub" id="nedry-sub">YOU DIDN'T SAY THE MAGIC WORD</div>
+    <button class="nedry-dismiss" onclick="dismissNedry()">[ TRY AGAIN ]</button>
+  </div>
+</div>
+
+<!-- Success Screen -->
+<div id="success-screen">
+  <div class="success-text">ACCESS GRANTED</div>
+  <div class="loading-bar-wrap">
+    <div class="loading-bar"></div>
+  </div>
+  <div class="loading-label">Decrypting InGen mainframe... <span id="load-status">0%</span></div>
+</div>
+
+<div class="status-bar">
+  <span><span class="status-dot"></span>SECURE CHANNEL ACTIVE</span>
+  <span>INGEN_BIOSYS // NODE_7 // SITEΒ</span>
+  <span id="clock"></span>
+</div>
+
+<script>
+  // Clock
+  function updateClock() {
+    const t = new Date().toLocaleTimeString('en-US', { hour12: false });
+    document.getElementById('clock').textContent = t;
+    document.getElementById('clock2').textContent = t;
+  }
+  updateClock();
+  setInterval(updateClock, 1000);
+
+  // Enter key support
+  document.getElementById('magic-input').addEventListener('keydown', e => {
+    if (e.key === 'Enter') submitWord();
+  });
+
+  let attempts = 0;
+  let nedryLines = [
+    ['AH AH AH...', 'YOU DIDN\'T SAY THE MAGIC WORD'],
+    ['AH AH AH...', 'STILL NOT THE MAGIC WORD 🦕'],
+    ['AH AH AH...', 'OH COME ON. REALLY?'],
+    ['AH AH AH...', 'I COULD DO THIS ALL DAY'],
+    ['AH AH AH...', 'HAVE YOU TRIED... SAYING IT NICELY?'],
+    ['AH AH AH...', 'nope. not even close.'],
+    ['AH AH AH...', 'NEDRY OUT HERE LAUGHING AT YOU'],
+    ['NOPE!', 'WRONG AGAIN, GENIUS'],
+    ['AH AH AH...', 'YOU LOOK LIKE YOU NEED A HINT'],
+  ];
+
+  function addOutput(tag, msg, cls, delay) {
+    const area = document.getElementById('output');
+    const line = document.createElement('div');
+    line.className = 'out-line';
+    line.style.animationDelay = delay || '0s';
+    line.innerHTML = `<span class="tag">${tag}</span><span class="${cls || ''}">${msg}</span>`;
+    area.appendChild(line);
+    area.scrollTop = area.scrollHeight;
+  }
+
+  function submitWord() {
+    const input = document.getElementById('magic-input');
+    const word = input.value.trim().toLowerCase();
+    if (!word) return;
+
+    const typed = input.value.trim();
+    input.value = '';
+
+    addOutput('root@ingen:~$', typed, '', '0s');
+
+    // The magic word is "please" (Jurassic Park reference)
+    if (word === 'please') {
+      // Show success then redirect
+      addOutput('[AUTH]', 'Passphrase accepted. Verifying credentials...', 'ok', '0.1s');
+      addOutput('[SYS]', 'ACCESS GRANTED. Loading...', 'ok', '0.5s');
+      setTimeout(() => {
+        document.getElementById('success-screen').classList.add('show');
+        animateLoadPercent();
+      }, 1200);
+      setTimeout(() => {
+        window.location.href = 'https://www.youtube.com/watch?v=dQw4w9WgXcQ';
+      }, 4000);
+    } else {
+      // Wrong — show nedry
+      attempts++;
+      updateAttempts();
+
+      const nedryLine = nedryLines[Math.min(attempts - 1, nedryLines.length - 1)];
+      document.getElementById('nedry-msg').textContent = nedryLine[0];
+      document.getElementById('nedry-sub').textContent = nedryLine[1];
+
+      // Glitch the terminal
+      document.getElementById('terminal').classList.add('glitch');
+      setTimeout(() => document.getElementById('terminal').classList.remove('glitch'), 400);
+
+      addOutput('[AUTH]', `Passphrase rejected: "${typed}"`, 'err', '0.1s');
+
+      setTimeout(() => {
+        document.getElementById('nedry-popup').classList.add('show');
+      }, 300);
+    }
+  }
+
+  function dismissNedry() {
+    document.getElementById('nedry-popup').classList.remove('show');
+    setTimeout(() => document.getElementById('magic-input').focus(), 100);
+  }
+
+  function updateAttempts() {
+    const el = document.getElementById('attempts');
+    if (attempts > 1) {
+      el.textContent = `Failed attempts: ${attempts}  |  Nedry is enjoying this.`;
+    }
+  }
+
+  function animateLoadPercent() {
+    const el = document.getElementById('load-status');
+    const milestones = [
+      [400, '12%'], [700, '31%'], [1000, '58%'],
+      [1500, '74%'], [2000, '89%'], [2500, '96%'], [3000, '100%']
+    ];
+    milestones.forEach(([ms, pct]) => {
+      setTimeout(() => el.textContent = pct, ms);
+    });
+  }
+
+  // Allow clicking outside nedry to dismiss
+  document.getElementById('nedry-popup').addEventListener('click', function(e) {
+    if (e.target === this) dismissNedry();
+  });
+</script>
+
 </body>
 </html>

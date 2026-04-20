@@ -1,37 +1,363 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Magic Word</title>
-    <style>
-        body {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            margin: 0;
-            font-family: Arial, sans-serif;
-            background: url('jurassic_park_background_main.jpg') no-repeat center center fixed;
-            background-size: cover;
-            color: white;
-        }
-        button {
-            padding: 20px;
-            font-size: 18px;
-            background-color: rgba(0, 0, 0, 0.5);
-            color: white;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-            transition: background-color 0.3s;
-        }
-        button:hover {
-            background-color: rgba(0, 0, 0, 0.7);
-        }
-    </style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Magic Word</title>
+  <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Orbitron:wght@400;700;900&display=swap" rel="stylesheet"/>
+  <style>
+    :root {
+      --green: #00ff41;
+      --dim-green: #00b32c;
+      --dark-green: #003b10;
+      --amber: #ffb000;
+      --red: #ff2d2d;
+      --bg: #030a04;
+      --panel: rgba(0, 255, 65, 0.04);
+      --border: rgba(0, 255, 65, 0.2);
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    html, body {
+      width: 100%; height: 100%;
+      background: var(--bg);
+      color: var(--green);
+      font-family: 'Share Tech Mono', monospace;
+      overflow: hidden;
+    }
+
+    /* CRT scanlines overlay */
+    body::before {
+      content: '';
+      position: fixed; inset: 0;
+      background: repeating-linear-gradient(
+        0deg,
+        transparent,
+        transparent 2px,
+        rgba(0,0,0,0.15) 2px,
+        rgba(0,0,0,0.15) 4px
+      );
+      pointer-events: none;
+      z-index: 100;
+    }
+
+    /* CRT vignette */
+    body::after {
+      content: '';
+      position: fixed; inset: 0;
+      background: radial-gradient(ellipse at center, transparent 60%, rgba(0,0,0,0.8) 100%);
+      pointer-events: none;
+      z-index: 99;
+    }
+
+    .container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      padding: 2rem;
+      position: relative;
+    }
+
+    /* Floating particles */
+    .particle {
+      position: fixed;
+      width: 2px;
+      height: 2px;
+      background: var(--green);
+      border-radius: 50%;
+      opacity: 0;
+      animation: float-up linear infinite;
+    }
+
+    @keyframes float-up {
+      0% { transform: translateY(100vh) translateX(0); opacity: 0; }
+      10% { opacity: 0.6; }
+      90% { opacity: 0.3; }
+      100% { transform: translateY(-10vh) translateX(var(--drift)); opacity: 0; }
+    }
+
+    .header-block {
+      text-align: center;
+      margin-bottom: 3rem;
+    }
+
+    .jp-logo {
+      font-family: 'Orbitron', monospace;
+      font-size: clamp(1.8rem, 5vw, 3.5rem);
+      font-weight: 900;
+      color: var(--amber);
+      text-shadow: 0 0 20px rgba(255,176,0,0.8), 0 0 60px rgba(255,176,0,0.3);
+      letter-spacing: 0.15em;
+      animation: flicker 8s infinite;
+      line-height: 1.1;
+    }
+
+    @keyframes flicker {
+      0%, 95%, 100% { opacity: 1; }
+      96% { opacity: 0.4; }
+      97% { opacity: 1; }
+      98% { opacity: 0.2; }
+      99% { opacity: 1; }
+    }
+
+    .subtitle {
+      font-size: 0.85rem;
+      color: var(--dim-green);
+      letter-spacing: 0.3em;
+      text-transform: uppercase;
+      margin-top: 0.5rem;
+      opacity: 0.8;
+    }
+
+    .terminal-panel {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 2.5rem 3rem;
+      width: min(520px, 92vw);
+      box-shadow:
+        0 0 30px rgba(0,255,65,0.08),
+        inset 0 0 30px rgba(0,255,65,0.03);
+      position: relative;
+    }
+
+    .terminal-panel::before {
+      content: '● ● ●';
+      position: absolute;
+      top: 12px;
+      left: 16px;
+      font-size: 0.6rem;
+      color: var(--border);
+      letter-spacing: 4px;
+    }
+
+    .terminal-panel::after {
+      content: 'INGEN_TERMINAL_v4.2.1';
+      position: absolute;
+      top: 10px;
+      right: 16px;
+      font-size: 0.6rem;
+      color: var(--border);
+      letter-spacing: 0.1em;
+    }
+
+    .prompt-line {
+      margin-bottom: 1.2rem;
+      font-size: 0.82rem;
+      color: var(--dim-green);
+      opacity: 0;
+      animation: reveal 0.4s forwards;
+    }
+
+    .prompt-line:nth-child(1) { animation-delay: 0.3s; }
+    .prompt-line:nth-child(2) { animation-delay: 0.9s; }
+    .prompt-line:nth-child(3) { animation-delay: 1.5s; }
+    .prompt-line:nth-child(4) { animation-delay: 2.1s; }
+
+    @keyframes reveal {
+      from { opacity: 0; transform: translateX(-5px); }
+      to { opacity: 1; transform: translateX(0); }
+    }
+
+    .prompt-line .tag {
+      color: var(--amber);
+    }
+
+    .prompt-line .ok {
+      color: var(--green);
+    }
+
+    .prompt-line .warn {
+      color: var(--red);
+    }
+
+    .divider {
+      border: none;
+      border-top: 1px solid var(--border);
+      margin: 1.5rem 0;
+      opacity: 0;
+      animation: reveal 0.4s 2.6s forwards;
+    }
+
+    .cta-area {
+      text-align: center;
+      opacity: 0;
+      animation: reveal 0.4s 3s forwards;
+    }
+
+    .access-label {
+      font-size: 0.75rem;
+      color: var(--dim-green);
+      letter-spacing: 0.2em;
+      margin-bottom: 1.2rem;
+      text-transform: uppercase;
+    }
+
+    .enter-btn {
+      display: inline-block;
+      font-family: 'Orbitron', monospace;
+      font-size: 1rem;
+      font-weight: 700;
+      letter-spacing: 0.2em;
+      color: var(--bg);
+      background: var(--green);
+      border: none;
+      padding: 0.9rem 2.5rem;
+      cursor: pointer;
+      text-decoration: none;
+      clip-path: polygon(8px 0%, 100% 0%, calc(100% - 8px) 100%, 0% 100%);
+      transition: all 0.2s;
+      position: relative;
+      text-transform: uppercase;
+      box-shadow: 0 0 20px rgba(0,255,65,0.4);
+    }
+
+    .enter-btn:hover {
+      background: var(--amber);
+      color: var(--bg);
+      box-shadow: 0 0 30px rgba(255,176,0,0.6);
+      transform: scale(1.04);
+    }
+
+    .enter-btn:active {
+      transform: scale(0.97);
+    }
+
+    .warning-bar {
+      margin-top: 2rem;
+      padding: 0.6rem 1rem;
+      background: rgba(255,45,45,0.06);
+      border: 1px solid rgba(255,45,45,0.2);
+      font-size: 0.7rem;
+      color: rgba(255,45,45,0.7);
+      letter-spacing: 0.1em;
+      text-align: center;
+    }
+
+    .blink {
+      animation: blink 1.2s step-end infinite;
+    }
+
+    @keyframes blink {
+      50% { opacity: 0; }
+    }
+
+    .corner-deco {
+      position: fixed;
+      width: 60px;
+      height: 60px;
+      opacity: 0.15;
+    }
+
+    .corner-deco.tl { top: 20px; left: 20px; border-top: 2px solid var(--green); border-left: 2px solid var(--green); }
+    .corner-deco.tr { top: 20px; right: 20px; border-top: 2px solid var(--green); border-right: 2px solid var(--green); }
+    .corner-deco.bl { bottom: 20px; left: 20px; border-bottom: 2px solid var(--green); border-left: 2px solid var(--green); }
+    .corner-deco.br { bottom: 20px; right: 20px; border-bottom: 2px solid var(--green); border-right: 2px solid var(--green); }
+
+    .status-bar {
+      position: fixed;
+      bottom: 0;
+      left: 0; right: 0;
+      height: 28px;
+      background: rgba(0,255,65,0.07);
+      border-top: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      padding: 0 1.5rem;
+      font-size: 0.65rem;
+      color: var(--dim-green);
+      justify-content: space-between;
+      z-index: 50;
+    }
+
+    .status-dot {
+      display: inline-block;
+      width: 6px; height: 6px;
+      background: var(--green);
+      border-radius: 50%;
+      margin-right: 6px;
+      animation: pulse 2s ease-in-out infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { box-shadow: 0 0 4px var(--green); opacity: 1; }
+      50% { box-shadow: 0 0 10px var(--green); opacity: 0.7; }
+    }
+  </style>
 </head>
 <body>
-    <button onclick="window.location.href='magicword.html'">Enter Here</button>
+
+<!-- Corner decorations -->
+<div class="corner-deco tl"></div>
+<div class="corner-deco tr"></div>
+<div class="corner-deco bl"></div>
+<div class="corner-deco br"></div>
+
+<!-- Floating particles -->
+<script>
+  for (let i = 0; i < 25; i++) {
+    const p = document.createElement('div');
+    p.className = 'particle';
+    p.style.left = Math.random() * 100 + 'vw';
+    p.style.animationDuration = (8 + Math.random() * 12) + 's';
+    p.style.animationDelay = (Math.random() * 10) + 's';
+    p.style.setProperty('--drift', (Math.random() * 80 - 40) + 'px');
+    p.style.opacity = Math.random() * 0.5;
+    document.body.appendChild(p);
+  }
+</script>
+
+<div class="container">
+  <div class="header-block">
+    <div class="jp-logo">INGEN CORP.</div>
+    <div class="jp-logo" style="font-size: clamp(1rem, 3vw, 1.8rem); color: var(--green); margin-top: 0.3rem; text-shadow: 0 0 20px rgba(0,255,65,0.8);">SITE B // ISLA SORNA</div>
+    <div class="subtitle">Restricted Access Terminal &nbsp;|&nbsp; Auth Level: UNKNOWN</div>
+  </div>
+
+  <div class="terminal-panel">
+    <div class="prompt-line">
+      <span class="tag">[SYS]</span> Initializing secure channel... <span class="ok">OK</span>
+    </div>
+    <div class="prompt-line">
+      <span class="tag">[NET]</span> Node handshake established @ 192.168.1.██... <span class="ok">CONNECTED</span>
+    </div>
+    <div class="prompt-line">
+      <span class="tag">[AUTH]</span> Identity unverified. Proceed at your own risk.
+    </div>
+    <div class="prompt-line">
+      <span class="tag">[INFO]</span> Access requires knowledge of <span class="warn">THE MAGIC WORD</span> <span class="blink">_</span>
+    </div>
+
+    <hr class="divider"/>
+
+    <div class="cta-area">
+      <div class="access-label">Do you know it?</div>
+      <a href="magicword.html" class="enter-btn">[ ENTER ]</a>
+      <div class="warning-bar">
+        ⚠ UNAUTHORIZED ACCESS IS MONITORED &nbsp;|&nbsp; D. NEDRY IS WATCHING
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="status-bar">
+  <span><span class="status-dot"></span>SYSTEM ONLINE</span>
+  <span>INGEN_BIOSYS v4.2.1 // TERMINAL_7</span>
+  <span id="clock"></span>
+</div>
+
+<script>
+  function updateClock() {
+    const now = new Date();
+    document.getElementById('clock').textContent =
+      now.toLocaleTimeString('en-US', { hour12: false });
+  }
+  updateClock();
+  setInterval(updateClock, 1000);
+</script>
+
 </body>
 </html>
