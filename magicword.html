@@ -59,6 +59,7 @@
       min-height: 100vh;
       padding: 2rem;
       position: relative;
+      z-index: 10;
     }
 
     .header {
@@ -268,12 +269,12 @@
       background: rgba(255,176,0,0.15);
     }
 
-    /* Success screen */
+    /* Success overlay sits on top of the video */
     #success-screen {
       display: none;
-      position: fixed;
+      position: absolute;
       inset: 0;
-      z-index: 300;
+      z-index: 510;
       align-items: center;
       justify-content: center;
       flex-direction: column;
@@ -373,7 +374,7 @@
       font-size: 0.62rem;
       color: var(--dim-green);
       justify-content: space-between;
-      z-index: 50;
+      z-index: 60;
     }
 
     .status-dot {
@@ -541,16 +542,7 @@
   </div>
 </div>
 
-<!-- Success Screen / Loading -->
-<div id="success-screen">
-  <div class="success-text">ACCESS GRANTED</div>
-  <div class="loading-bar-wrap">
-    <div class="loading-bar"></div>
-  </div>
-  <div class="loading-label">Decrypting InGen mainframe... <span id="load-status">0%</span></div>
-</div>
-
-<!-- Fullscreen Rick Roll -->
+<!-- Fullscreen Rick Roll — always in DOM, hidden until triggered -->
 <div id="rickroll-screen">
   <iframe
     id="rr-iframe"
@@ -559,7 +551,17 @@
     allow="autoplay; encrypted-media; fullscreen"
     allowfullscreen
   ></iframe>
-  <!-- Fake exit button that just taunts them -->
+
+  <!-- Loading overlay sits ON TOP of the already-playing video -->
+  <div id="success-screen">
+    <div class="success-text">ACCESS GRANTED</div>
+    <div class="loading-bar-wrap">
+      <div class="loading-bar" id="loading-bar"></div>
+    </div>
+    <div class="loading-label">Decrypting InGen mainframe... <span id="load-status">0%</span></div>
+  </div>
+
+  <!-- Fake exit button -->
   <div class="rr-overlay-btn" id="fake-exit" onclick="fakeExit()">✕ EXIT</div>
   <div class="rr-taunt" id="rr-taunt"></div>
 </div>
@@ -620,26 +622,34 @@
 
     // The magic word is "please" (Jurassic Park reference)
     if (word === 'please') {
-      // Show success then launch embedded rick roll
       addOutput('[AUTH]', 'Passphrase accepted. Verifying credentials...', 'ok', '0.1s');
       addOutput('[SYS]', 'ACCESS GRANTED. Loading...', 'ok', '0.5s');
+
+      // Arm beforeunload trap immediately
+      window.addEventListener('beforeunload', trapLeave);
+
+      // Show rickroll screen and request fullscreen RIGHT NOW — still inside user gesture
+      const rrScreen = document.getElementById('rickroll-screen');
+      const successScreen = document.getElementById('success-screen');
+
+      // Start loading the video silently in background
+      document.getElementById('rr-iframe').src =
+        'https://www.youtube.com/embed/dQw4w9WgXcQ?autoplay=1&controls=0&disablekb=1&loop=1&playlist=dQw4w9WgXcQ&rel=0&modestbranding=1';
+
+      rrScreen.classList.add('show');
+      successScreen.classList.add('show');
+      animateLoadPercent();
+
+      // Request fullscreen immediately — we're still inside the click/keydown handler
+      const fsTarget = document.documentElement;
+      if (fsTarget.requestFullscreen) fsTarget.requestFullscreen();
+      else if (fsTarget.webkitRequestFullscreen) fsTarget.webkitRequestFullscreen();
+      else if (fsTarget.mozRequestFullScreen) fsTarget.mozRequestFullScreen();
+
+      // After fake load completes, hide the loading overlay to reveal Rick
       setTimeout(() => {
-        document.getElementById('success-screen').classList.add('show');
-        animateLoadPercent();
-      }, 1200);
-      setTimeout(() => {
-        // Arm the beforeunload trap BEFORE showing the video
-        window.addEventListener('beforeunload', trapLeave);
-        // Embed the rick roll as a fullscreen iframe
-        document.getElementById('rr-iframe').src =
-          'https://www.youtube.com/embed/dQw4w9WgXcQ?autoplay=1&controls=0&disablekb=1&loop=1&playlist=dQw4w9WgXcQ&rel=0&modestbranding=1';
-        document.getElementById('success-screen').classList.remove('show');
-        document.getElementById('rickroll-screen').classList.add('show');
-        // Try to go fullscreen
-        const el = document.getElementById('rickroll-screen');
-        if (el.requestFullscreen) el.requestFullscreen();
-        else if (el.webkitRequestFullscreen) el.webkitRequestFullscreen();
-      }, 4000);
+        successScreen.classList.remove('show');
+      }, 3800);
     } else {
       // Wrong — show nedry
       attempts++;
@@ -673,11 +683,40 @@
     }
   }
 
+  // If they escape fullscreen, taunt them and try to pull them back in on next click
+  document.addEventListener('fullscreenchange', handleFsChange);
+  document.addEventListener('webkitfullscreenchange', handleFsChange);
+
+  function handleFsChange() {
+    const isFs = !!(document.fullscreenElement || document.webkitFullscreenElement);
+    if (!isFs && document.getElementById('rickroll-screen').classList.contains('show')) {
+      // They escaped — show the taunt and a "re-enter" button
+      const taunt = document.getElementById('rr-taunt');
+      taunt.textContent = '🦕 YOU ESCAPED... but you\'re still here. Click to return.';
+      taunt.classList.add('visible');
+      taunt.style.pointerEvents = 'auto';
+      taunt.style.cursor = 'pointer';
+      taunt.onclick = () => {
+        const fs = document.documentElement;
+        if (fs.requestFullscreen) fs.requestFullscreen();
+        else if (fs.webkitRequestFullscreen) fs.webkitRequestFullscreen();
+        taunt.classList.remove('visible');
+        taunt.style.pointerEvents = 'none';
+        taunt.onclick = null;
+      };
+    }
+  }
+
   function animateLoadPercent() {
     const el = document.getElementById('load-status');
+    const bar = document.getElementById('loading-bar');
+    // Reset and re-trigger the CSS animation
+    bar.style.animation = 'none';
+    bar.offsetHeight; // reflow
+    bar.style.animation = '';
     const milestones = [
-      [400, '12%'], [700, '31%'], [1000, '58%'],
-      [1500, '74%'], [2000, '89%'], [2500, '96%'], [3000, '100%']
+      [300, '12%'], [600, '31%'], [900, '58%'],
+      [1400, '74%'], [1900, '89%'], [2400, '96%'], [3400, '100%']
     ];
     milestones.forEach(([ms, pct]) => {
       setTimeout(() => el.textContent = pct, ms);
