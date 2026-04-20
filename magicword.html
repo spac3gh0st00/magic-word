@@ -459,6 +459,26 @@
       opacity: 1;
     }
 
+    #tap-continue {
+      margin-top: 2rem;
+      font-family: 'Orbitron', monospace;
+      font-size: clamp(0.9rem, 3vw, 1.1rem);
+      font-weight: 700;
+      letter-spacing: 0.2em;
+      color: var(--bg);
+      background: var(--green);
+      border: none;
+      padding: 1rem 2.5rem;
+      cursor: pointer;
+      clip-path: polygon(8px 0%, 100% 0%, calc(100% - 8px) 100%, 0% 100%);
+      animation: tap-pulse 1.2s ease-in-out infinite;
+    }
+
+    @keyframes tap-pulse {
+      0%, 100% { box-shadow: 0 0 15px rgba(0,255,65,0.5); transform: scale(1); }
+      50% { box-shadow: 0 0 35px rgba(0,255,65,0.9); transform: scale(1.04); }
+    }
+
     .glitch {
       animation: glitch 0.4s;
     }
@@ -560,6 +580,9 @@
       <div class="loading-bar" id="loading-bar"></div>
     </div>
     <div class="loading-label">Decrypting InGen mainframe... <span id="load-status">0%</span></div>
+    <button id="tap-continue" onclick="launchRickRoll()" style="display:none;">
+      [ TAP TO INITIALIZE ]
+    </button>
   </div>
 
   <!-- Fake exit button -->
@@ -611,6 +634,23 @@
     area.scrollTop = area.scrollHeight;
   }
 
+  const isMobile = navigator.maxTouchPoints > 0 || /Mobi|Android/i.test(navigator.userAgent);
+
+  function launchRickRoll() {
+    // Load the video — called directly from tap on mobile, so autoplay is allowed
+    document.getElementById('rr-iframe').src =
+      'https://www.youtube.com/embed/dQw4w9WgXcQ?autoplay=1&controls=0&disablekb=1&loop=1&playlist=dQw4w9WgXcQ&rel=0&modestbranding=1';
+
+    // Hide the loading overlay to reveal Rick
+    document.getElementById('success-screen').classList.remove('show');
+
+    // Request fullscreen — must be in user gesture context
+    const fsTarget = document.documentElement;
+    if (fsTarget.requestFullscreen) fsTarget.requestFullscreen();
+    else if (fsTarget.webkitRequestFullscreen) fsTarget.webkitRequestFullscreen();
+    else if (fsTarget.mozRequestFullScreen) fsTarget.mozRequestFullScreen();
+  }
+
   function submitWord() {
     const input = document.getElementById('magic-input');
     const word = input.value.trim().toLowerCase();
@@ -621,36 +661,39 @@
 
     addOutput('root@ingen:~$', typed, '', '0s');
 
-    // The magic word is "please" (Jurassic Park reference)
     if (word === 'please') {
       addOutput('[AUTH]', 'Passphrase accepted. Verifying credentials...', 'ok', '0.1s');
       addOutput('[SYS]', 'ACCESS GRANTED. Loading...', 'ok', '0.5s');
 
-      // Arm beforeunload trap immediately
       window.addEventListener('beforeunload', trapLeave);
 
-      // Show rickroll screen and request fullscreen RIGHT NOW — still inside user gesture
       const rrScreen = document.getElementById('rickroll-screen');
       const successScreen = document.getElementById('success-screen');
-
-      // Start loading the video silently in background
-      document.getElementById('rr-iframe').src =
-        'https://www.youtube.com/embed/dQw4w9WgXcQ?autoplay=1&controls=0&disablekb=1&loop=1&playlist=dQw4w9WgXcQ&rel=0&modestbranding=1';
-
       rrScreen.classList.add('show');
       successScreen.classList.add('show');
       animateLoadPercent();
 
-      // Request fullscreen immediately — we're still inside the click/keydown handler
-      const fsTarget = document.documentElement;
-      if (fsTarget.requestFullscreen) fsTarget.requestFullscreen();
-      else if (fsTarget.webkitRequestFullscreen) fsTarget.webkitRequestFullscreen();
-      else if (fsTarget.mozRequestFullScreen) fsTarget.mozRequestFullScreen();
+      if (isMobile) {
+        // On mobile: wait for load to finish, then show a tap button
+        // The tap IS the user gesture that unlocks autoplay with sound
+        setTimeout(() => {
+          document.getElementById('load-status').textContent = '100%';
+          document.getElementById('tap-continue').style.display = 'block';
+        }, 3600);
+      } else {
+        // Desktop: load video in background immediately (gesture context still valid)
+        document.getElementById('rr-iframe').src =
+          'https://www.youtube.com/embed/dQw4w9WgXcQ?autoplay=1&controls=0&disablekb=1&loop=1&playlist=dQw4w9WgXcQ&rel=0&modestbranding=1';
 
-      // After fake load completes, hide the loading overlay to reveal Rick
-      setTimeout(() => {
-        successScreen.classList.remove('show');
-      }, 3800);
+        // Request fullscreen immediately — still inside the click/keydown handler
+        const fsTarget = document.documentElement;
+        if (fsTarget.requestFullscreen) fsTarget.requestFullscreen();
+        else if (fsTarget.webkitRequestFullscreen) fsTarget.webkitRequestFullscreen();
+        else if (fsTarget.mozRequestFullScreen) fsTarget.mozRequestFullScreen();
+
+        // Hide loading overlay after fake load
+        setTimeout(() => successScreen.classList.remove('show'), 3800);
+      }
     } else {
       // Wrong — show nedry
       attempts++;
