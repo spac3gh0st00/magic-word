@@ -144,6 +144,7 @@
       display: flex;
       align-items: center;
       gap: 0.8rem;
+      flex-wrap: wrap;
     }
 
     .prompt-symbol {
@@ -154,6 +155,7 @@
 
     #magic-input {
       flex: 1;
+      min-width: 0;
       background: transparent;
       border: none;
       outline: none;
@@ -174,16 +176,25 @@
       color: var(--green);
       font-family: 'Share Tech Mono', monospace;
       font-size: 0.75rem;
-      padding: 0.4rem 0.8rem;
+      padding: 0.5rem 1rem;
       cursor: pointer;
       letter-spacing: 0.1em;
       transition: all 0.2s;
+      white-space: nowrap;
+      flex-shrink: 0;
     }
 
     .submit-btn:hover {
       background: rgba(0,255,65,0.1);
       border-color: var(--green);
       box-shadow: 0 0 10px rgba(0,255,65,0.3);
+    }
+
+    @media (max-width: 480px) {
+      .prompt-symbol { display: none; }
+      #magic-input { font-size: 1rem; }
+      .submit-btn { width: 100%; text-align: center; margin-top: 0.3rem; }
+      .input-area { padding: 0.8rem 1rem; }
     }
 
     /* Nedry popup */
@@ -637,18 +648,19 @@
   const isMobile = navigator.maxTouchPoints > 0 || /Mobi|Android/i.test(navigator.userAgent);
 
   function launchRickRoll() {
-    // Load the video — called directly from tap on mobile, so autoplay is allowed
-    document.getElementById('rr-iframe').src =
-      'https://www.youtube.com/embed/dQw4w9WgXcQ?autoplay=1&controls=0&disablekb=1&loop=1&playlist=dQw4w9WgXcQ&rel=0&modestbranding=1';
-
-    // Hide the loading overlay to reveal Rick
-    document.getElementById('success-screen').classList.remove('show');
-
-    // Request fullscreen — must be in user gesture context
-    const fsTarget = document.documentElement;
-    if (fsTarget.requestFullscreen) fsTarget.requestFullscreen();
-    else if (fsTarget.webkitRequestFullscreen) fsTarget.webkitRequestFullscreen();
-    else if (fsTarget.mozRequestFullScreen) fsTarget.mozRequestFullScreen();
+    if (isMobile) {
+      // Redirect directly — opens YouTube app or mobile site with full audio
+      window.location.href = 'https://www.youtube.com/watch?v=dQw4w9WgXcQ';
+    } else {
+      // Desktop: load iframe and go fullscreen
+      document.getElementById('rr-iframe').src =
+        'https://www.youtube.com/embed/dQw4w9WgXcQ?autoplay=1&controls=0&disablekb=1&loop=1&playlist=dQw4w9WgXcQ&rel=0&modestbranding=1';
+      document.getElementById('success-screen').classList.remove('show');
+      const fsTarget = document.documentElement;
+      if (fsTarget.requestFullscreen) fsTarget.requestFullscreen();
+      else if (fsTarget.webkitRequestFullscreen) fsTarget.webkitRequestFullscreen();
+      else if (fsTarget.mozRequestFullScreen) fsTarget.mozRequestFullScreen();
+    }
   }
 
   function submitWord() {
@@ -674,8 +686,8 @@
       animateLoadPercent();
 
       if (isMobile) {
-        // On mobile: wait for load to finish, then show a tap button
-        // The tap IS the user gesture that unlocks autoplay with sound
+        // iOS/Android block iframe autoplay with sound no matter what.
+        // Redirect directly to YouTube — opens the app or mobile site with full audio.
         setTimeout(() => {
           document.getElementById('load-status').textContent = '100%';
           document.getElementById('tap-continue').style.display = 'block';
