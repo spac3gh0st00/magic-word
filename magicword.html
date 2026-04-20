@@ -645,22 +645,15 @@
     area.scrollTop = area.scrollHeight;
   }
 
-  const isMobile = navigator.maxTouchPoints > 0 || /Mobi|Android/i.test(navigator.userAgent);
+  const isMobile = (
+    navigator.maxTouchPoints > 0 ||
+    /Mobi|Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) ||
+    window.matchMedia('(pointer: coarse)').matches
+  );
 
   function launchRickRoll() {
-    if (isMobile) {
-      // Redirect directly — opens YouTube app or mobile site with full audio
-      window.location.href = 'https://www.youtube.com/watch?v=dQw4w9WgXcQ';
-    } else {
-      // Desktop: load iframe and go fullscreen
-      document.getElementById('rr-iframe').src =
-        'https://www.youtube.com/embed/dQw4w9WgXcQ?autoplay=1&controls=0&disablekb=1&loop=1&playlist=dQw4w9WgXcQ&rel=0&modestbranding=1';
-      document.getElementById('success-screen').classList.remove('show');
-      const fsTarget = document.documentElement;
-      if (fsTarget.requestFullscreen) fsTarget.requestFullscreen();
-      else if (fsTarget.webkitRequestFullscreen) fsTarget.webkitRequestFullscreen();
-      else if (fsTarget.mozRequestFullScreen) fsTarget.mozRequestFullScreen();
-    }
+    // Redirect directly — on mobile this opens the YouTube app which autoplays with sound
+    window.location.href = 'https://youtu.be/dQw4w9WgXcQ';
   }
 
   function submitWord() {
