@@ -390,7 +390,73 @@
       50% { box-shadow: 0 0 8px var(--green); opacity: 0.7; }
     }
 
-    /* Glitch effect on wrong answer */
+    /* Rickroll fullscreen */
+    #rickroll-screen {
+      display: none;
+      position: fixed;
+      inset: 0;
+      z-index: 500;
+      background: #000;
+    }
+
+    #rickroll-screen.show {
+      display: block;
+    }
+
+    #rr-iframe {
+      width: 100%;
+      height: 100%;
+      border: none;
+    }
+
+    .rr-overlay-btn {
+      position: fixed;
+      top: 18px;
+      right: 20px;
+      z-index: 600;
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 0.75rem;
+      color: rgba(255,255,255,0.5);
+      background: rgba(0,0,0,0.5);
+      border: 1px solid rgba(255,255,255,0.15);
+      padding: 0.4rem 0.9rem;
+      cursor: pointer;
+      letter-spacing: 0.1em;
+      transition: all 0.2s;
+      border-radius: 3px;
+      user-select: none;
+    }
+
+    .rr-overlay-btn:hover {
+      color: var(--red);
+      border-color: var(--red);
+      background: rgba(255,45,45,0.1);
+    }
+
+    .rr-taunt {
+      position: fixed;
+      bottom: 24px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 600;
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 0.8rem;
+      color: rgba(255,255,255,0.7);
+      background: rgba(0,0,0,0.7);
+      border: 1px solid rgba(255,255,255,0.15);
+      padding: 0.5rem 1.2rem;
+      border-radius: 3px;
+      letter-spacing: 0.1em;
+      opacity: 0;
+      transition: opacity 0.4s;
+      white-space: nowrap;
+      pointer-events: none;
+    }
+
+    .rr-taunt.visible {
+      opacity: 1;
+    }
+
     .glitch {
       animation: glitch 0.4s;
     }
@@ -475,13 +541,27 @@
   </div>
 </div>
 
-<!-- Success Screen -->
+<!-- Success Screen / Loading -->
 <div id="success-screen">
   <div class="success-text">ACCESS GRANTED</div>
   <div class="loading-bar-wrap">
     <div class="loading-bar"></div>
   </div>
   <div class="loading-label">Decrypting InGen mainframe... <span id="load-status">0%</span></div>
+</div>
+
+<!-- Fullscreen Rick Roll -->
+<div id="rickroll-screen">
+  <iframe
+    id="rr-iframe"
+    src=""
+    frameborder="0"
+    allow="autoplay; encrypted-media; fullscreen"
+    allowfullscreen
+  ></iframe>
+  <!-- Fake exit button that just taunts them -->
+  <div class="rr-overlay-btn" id="fake-exit" onclick="fakeExit()">✕ EXIT</div>
+  <div class="rr-taunt" id="rr-taunt"></div>
 </div>
 
 <div class="status-bar">
@@ -540,7 +620,7 @@
 
     // The magic word is "please" (Jurassic Park reference)
     if (word === 'please') {
-      // Show success then redirect
+      // Show success then launch embedded rick roll
       addOutput('[AUTH]', 'Passphrase accepted. Verifying credentials...', 'ok', '0.1s');
       addOutput('[SYS]', 'ACCESS GRANTED. Loading...', 'ok', '0.5s');
       setTimeout(() => {
@@ -548,7 +628,17 @@
         animateLoadPercent();
       }, 1200);
       setTimeout(() => {
-        window.location.href = 'https://www.youtube.com/watch?v=dQw4w9WgXcQ';
+        // Arm the beforeunload trap BEFORE showing the video
+        window.addEventListener('beforeunload', trapLeave);
+        // Embed the rick roll as a fullscreen iframe
+        document.getElementById('rr-iframe').src =
+          'https://www.youtube.com/embed/dQw4w9WgXcQ?autoplay=1&controls=0&disablekb=1&loop=1&playlist=dQw4w9WgXcQ&rel=0&modestbranding=1';
+        document.getElementById('success-screen').classList.remove('show');
+        document.getElementById('rickroll-screen').classList.add('show');
+        // Try to go fullscreen
+        const el = document.getElementById('rickroll-screen');
+        if (el.requestFullscreen) el.requestFullscreen();
+        else if (el.webkitRequestFullscreen) el.webkitRequestFullscreen();
       }, 4000);
     } else {
       // Wrong — show nedry
@@ -598,6 +688,38 @@
   document.getElementById('nedry-popup').addEventListener('click', function(e) {
     if (e.target === this) dismissNedry();
   });
+
+  // Beforeunload trap — browser will show "Leave site?" dialog
+  function trapLeave(e) {
+    e.preventDefault();
+    e.returnValue = '';
+    return '';
+  }
+
+  // Fake exit button taunts
+  let taunts = [
+    "AH AH AH... you didn't say the magic word. 🦕",
+    "Nice try. You're staying. 😈",
+    "The exit is a lie.",
+    "Nedry disabled that button. Sorry.",
+    "You can check out any time you like...",
+    "There is no escape from Mr. Astley.",
+    "Haha. No.",
+    "Did you really think that would work?",
+    "🕺 NEVER GONNA GIVE YOU UP 🕺",
+    "The door only opens from the outside. 🔒",
+  ];
+  let tauntIndex = 0;
+  let tauntTimer = null;
+
+  function fakeExit() {
+    const taunt = document.getElementById('rr-taunt');
+    taunt.textContent = taunts[tauntIndex % taunts.length];
+    taunt.classList.add('visible');
+    tauntIndex++;
+    clearTimeout(tauntTimer);
+    tauntTimer = setTimeout(() => taunt.classList.remove('visible'), 2800);
+  }
 </script>
 
 </body>
