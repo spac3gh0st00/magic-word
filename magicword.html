@@ -4,6 +4,26 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>CLEARANCE REQUIRED</title>
+
+  <!-- Security hardening -->
+  <meta http-equiv="Content-Security-Policy" content="
+    default-src 'self';
+    style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;
+    font-src 'self' https://fonts.gstatic.com;
+    script-src 'self' 'unsafe-inline';
+    img-src 'self' data:;
+    media-src 'self';
+    frame-src 'none';
+    object-src 'none';
+    base-uri 'self';
+    form-action 'self';
+    navigate-to 'self' https://youtu.be https://www.youtube.com;
+  "/>
+  <meta http-equiv="X-Content-Type-Options" content="nosniff"/>
+  <meta http-equiv="X-Frame-Options" content="DENY"/>
+  <meta http-equiv="Referrer-Policy" content="no-referrer"/>
+  <meta http-equiv="Permissions-Policy" content="camera=(), microphone=(), geolocation=(), payment=(), fullscreen=(self)"/>
+  <!-- End security hardening -->
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' fill='%23030a04' rx='3'/><path d='M8 3 C7 8 6 14 10 29' stroke='%23ffb000' stroke-width='2.5' stroke-linecap='round' fill='none'/><path d='M15 2 C15 8 15 14 16 29' stroke='%23ffb000' stroke-width='2.5' stroke-linecap='round' fill='none'/><path d='M22 3 C23 8 24 14 23 29' stroke='%23ffb000' stroke-width='2.5' stroke-linecap='round' fill='none'/></svg>"/>
   <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Orbitron:wght@400;700;900&display=swap" rel="stylesheet"/>
   <style>
