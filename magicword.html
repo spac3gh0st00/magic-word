@@ -202,7 +202,7 @@
       display: none;
       position: fixed;
       inset: 0;
-      z-index: 300;
+      z-index: 700;
       align-items: center;
       justify-content: center;
       background: rgba(0,0,0,0.88);
@@ -416,10 +416,11 @@
       display: block;
     }
 
-    #rr-iframe {
+    #rr-video {
       width: 100%;
       height: 100%;
-      border: none;
+      object-fit: cover;
+      display: block;
     }
 
     .rr-overlay-btn {
@@ -576,13 +577,14 @@
 
 <!-- Fullscreen Rick Roll — always in DOM, hidden until triggered -->
 <div id="rickroll-screen">
-  <iframe
-    id="rr-iframe"
-    src=""
-    frameborder="0"
-    allow="autoplay; encrypted-media; fullscreen"
-    allowfullscreen
-  ></iframe>
+  <video
+    id="rr-video"
+    src="rickroll.mp4"
+    playsinline
+    loop
+    preload="none"
+    style="width:100%;height:100%;object-fit:cover;display:block;"
+  ></video>
 
   <!-- Loading overlay sits ON TOP of the already-playing video -->
   <div id="success-screen">
@@ -652,8 +654,14 @@
   );
 
   function launchRickRoll() {
-    // Redirect directly — on mobile this opens the YouTube app which autoplays with sound
-    window.location.href = 'https://youtu.be/dQw4w9WgXcQ';
+    const video = document.getElementById('rr-video');
+    video.play();
+    document.getElementById('success-screen').classList.remove('show');
+
+    const fsTarget = document.documentElement;
+    if (fsTarget.requestFullscreen) fsTarget.requestFullscreen();
+    else if (fsTarget.webkitRequestFullscreen) fsTarget.webkitRequestFullscreen();
+    else if (fsTarget.mozRequestFullScreen) fsTarget.mozRequestFullScreen();
   }
 
   function submitWord() {
@@ -679,18 +687,17 @@
       animateLoadPercent();
 
       if (isMobile) {
-        // iOS/Android block iframe autoplay with sound no matter what.
-        // Redirect directly to YouTube — opens the app or mobile site with full audio.
+        // Mobile: show tap button after fake load — tap is the user gesture for autoplay
         setTimeout(() => {
           document.getElementById('load-status').textContent = '100%';
           document.getElementById('tap-continue').style.display = 'block';
         }, 3600);
       } else {
-        // Desktop: load video in background immediately (gesture context still valid)
-        document.getElementById('rr-iframe').src =
-          'https://www.youtube.com/embed/dQw4w9WgXcQ?autoplay=1&controls=0&disablekb=1&loop=1&playlist=dQw4w9WgXcQ&rel=0&modestbranding=1';
+        // Desktop: call play() immediately — still inside the click/keydown gesture
+        const video = document.getElementById('rr-video');
+        video.play();
 
-        // Request fullscreen immediately — still inside the click/keydown handler
+        // Request fullscreen immediately
         const fsTarget = document.documentElement;
         if (fsTarget.requestFullscreen) fsTarget.requestFullscreen();
         else if (fsTarget.webkitRequestFullscreen) fsTarget.webkitRequestFullscreen();
