@@ -129,7 +129,7 @@ The fullscreen API fires synchronously inside the user gesture handler — this 
 
 <div align="center">
 
-**[→ Enter if you dare ←](https://spac3gh0st00.github.io/magic-word/)**
+**[→ Enter if you dare ←](https://secrets.spac3gh0st.lol/)**
 
 *InGen Corporation is not responsible for any loss of productivity, dignity, or sanity.*
 
