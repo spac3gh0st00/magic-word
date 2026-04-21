@@ -28,7 +28,7 @@
 
 **`INGEN CORP // SITE B // ISLA SORNA`**
 
-[![Live Site](https://img.shields.io/badge/LIVE-spac3gh0st00.github.io%2Fmagic--word-00ff41?style=flat-square&logo=github&logoColor=black)](https://spac3gh0st00.github.io/magic-word/)
+[![Live Site](https://img.shields.io/badge/LIVE-spac3gh0st00.github.io%2Fmagic--word-00ff41?style=flat-square&logo=github&logoColor=black)](https://secrets.spac3gh0st.lol)
 ![Status](https://img.shields.io/badge/STATUS-OPERATIONAL-00ff41?style=flat-square)
 ![Victims](https://img.shields.io/badge/VICTIMS-UNKNOWN-ffb000?style=flat-square)
 ![Made With](https://img.shields.io/badge/MADE_WITH-HTML_CSS_JS-00cfff?style=flat-square)
