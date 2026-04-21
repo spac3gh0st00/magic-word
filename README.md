@@ -64,6 +64,7 @@ index.html  ──►  INGEN landing page
 
 | Feature | Description |
 |---|---|
+| 🏷️ Cryptic browser titles | `[ RESTRICTED ]` on landing, `CLEARANCE REQUIRED` on auth page |
 | 🖥️ CRT terminal aesthetic | Scanlines, vignette, phosphor glow, corner HUD decorations |
 | 🦕 Dennis Nedry popups | 9+ escalating roast messages each wrong attempt |
 | ⚡ Glitch animation | Terminal glitches on every wrong answer |
@@ -86,7 +87,23 @@ magic-word/
 └── not here_fall.jpg
 ```
 
-## Tech
+## Security
+
+Both pages are hardened with the following security meta tags:
+
+| Header | Value |
+|---|---|
+| `Content-Security-Policy` | Whitelists only `self`, Google Fonts, and local media — blocks XSS and injected scripts |
+| `X-Frame-Options` | `DENY` — prevents clickjacking via iframe embedding |
+| `X-Content-Type-Options` | `nosniff` — blocks MIME sniffing exploits |
+| `Referrer-Policy` | `no-referrer` — nothing leaks when navigating away |
+| `Permissions-Policy` | Disables camera, mic, geolocation, and payment APIs |
+
+> GitHub Pages doesn't allow real HTTP header config, so these are implemented as `<meta http-equiv>` tags. For projects on your own domain (Nginx, Apache, Netlify, Cloudflare Pages), see [`SECURITY-HEADERS.md`](./SECURITY-HEADERS.md) for ready-to-paste real header configs — significantly stronger than meta tags.
+
+---
+
+
 
 Pure HTML, CSS, and vanilla JS. No frameworks, no dependencies, no build step. Hosted on GitHub Pages.
 
@@ -96,7 +113,7 @@ The fullscreen API fires synchronously inside the user gesture handler — this 
 
 <div align="center">
 
-**[→ Enter if you dare ←](https://secrets.spac3gh0st.lol/)**
+**[→ Enter if you dare ←](https://spac3gh0st00.github.io/magic-word/)**
 
 *InGen Corporation is not responsible for any loss of productivity, dignity, or sanity.*
 
